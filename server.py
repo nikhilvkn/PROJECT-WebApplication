@@ -20,6 +20,7 @@ def main():
 def path(url_path):
     return render_template(url_path)
 
+
 @app.route('/count_service', methods=['POST','GET'])
 def count_service():
    if request.method == 'POST':
@@ -44,3 +45,31 @@ def count_service():
       return render_template('result.html', data=result)
       if counter == 0:
          return render_template('output.html', data='All services have 3 or more instances')
+
+
+@app.route('/server-check', methods=['POST','GET'])
+def server_check():
+   if request.method == 'POST':
+      datacenter = request.form['Datacenter']
+      environment = request.form['Environment']
+      inception_service = request.form['Service']
+
+   if inception_service:
+      service_data = inception_service.split(',')
+      inception_request = Service(datacenter, environment)
+      all_service = inception_request.specific_service()
+      for content in service_data:
+         if content not in all_service:
+            return render_template('output.html',data = f'''FileNotFound Exception: Service {content} not found in {environment} environment.
+   Please re-check service name''')
+            sys.exit()
+      inception_request = Server(datacenter, environment, service_data)
+      return render_template('result-data.html', data = inception_request.specific_service())
+
+   if datacenter:
+      if bool(datacenter) ^ bool(environment):
+         inception_request = Server(datacenter)
+         return render_template('result-data.html', data = inception_request.all_server())
+      else:
+         inception_request = Server(datacenter, environment)
+         return render_template('result-data.html', data = inception_request.specific_server())
