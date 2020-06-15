@@ -1,6 +1,13 @@
 #!/usr/local/bin/python3
 
 from flask import Flask, render_template, request, jsonify
+import pandas as pd
+import json
+from inception import Server, Service, InceptionTools
+from pathlib import Path
+from collections import Counter
+import sys
+import datetime
 
 app = Flask(__name__)
 
@@ -13,7 +20,7 @@ def main():
 def path(url_path):
     return render_template(url_path)
 
-@app.route('/count-service')
+@app.route('/count_service', methods=['POST','GET'])
 def count_service():
    if request.method == 'POST':
       datacenter = request.form['Datacenter']
@@ -34,6 +41,6 @@ def count_service():
          if value < 3:
             counter += 1
             result[key] = str(value)
-      return render_template('service-dict-result.html', data=result)
+      return render_template('result.html', data=result)
       if counter == 0:
-         return render_template('server-exception.html', data='All services have 3 or more instances')
+         return render_template('output.html', data='All services have 3 or more instances')
