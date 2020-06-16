@@ -223,7 +223,16 @@ def health_check():
 						try:
 							contents.write('Service Status   : '+data['status']+'\n')	
 						except (KeyError, TypeError):
-							contents.write('Service Status   : '+str(data)+'\n')
+							for word in ERROR_WORDS:
+								if word not in str(data):
+									continue
+								else:
+									contents.write('Service Status   : NOT READY'+'\n')
+									return
+							if 'UP' or 'RUNNING' in str(data):
+								contents.write('Service Status   : UP'+'\n')
+							else:
+								contents.write(data+'\n')
 
 
 					contents.write('/HEALTH FOR: '+service+'\n')
@@ -232,7 +241,16 @@ def health_check():
 						try:
 							contents.write('Service Status   : '+data['status']+'\n')
 						except (TypeError, KeyError):
-							contents.write('Service Status   : '+str(data)+'\n')
+							for word in ERROR_WORDS:
+								if word not in str(data):
+									continue
+								else:
+									contents.write('Service Status   : NOT READY'+'\n')
+									return
+							if 'UP' or 'RUNNING' in str(data):
+								contents.write('Service Status   : UP'+'\n')
+							else:
+								contents.write(data+'\n')
 
 
 					contents.write('CONTAINER STATUS:'+'\n')
