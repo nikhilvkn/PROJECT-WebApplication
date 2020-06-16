@@ -135,34 +135,6 @@ class ServicePrint(ServiceCheck):
 	def __init__(self, service_name, dc_data, environment):
 		super().__init__(service_name, dc_data, environment)
 
-	def gather_status(self, data):
-		for word in ERROR_WORDS:
-			if word not in str(data):
-				continue
-			else:
-				contents.write('Service Status   : NOT READY')
-				return
-		if 'UP' or 'RUNNING' in str(data):
-			contents.write('Service Status   : UP')
-		else:
-			contents.write(data)
-
-	def info_print(self, data):
-		if data:
-			try:
-				appname = 'Application Name : '+data['app']['name']
-				appnumber = 'Build Number     : '+data['build']['number']
-				apptime = 'Build Time       : '+data['build']['time']
-				return appname, appnumber, apptime
-			except KeyError:
-				pass
-
-	def endpoint_print(self, data):
-		if data:
-			try:
-				contents.write('Service Status   : '+data['status'])	
-			except (KeyError, TypeError):
-				self.gather_status(data)
 
 	def endpoint_check(self, url, check):
 		try:
@@ -188,79 +160,88 @@ def health_check():
 		environment = request.form['Environment']
 		inception_service = request.form['Service']
 
-		os.remove(spaceFile)
-
 		inception_request = InceptionTools(datacenter)
 		dc_data = inception_request.dc_data()
 		service_data = inception_service.split(',')
 
-		for service in service_data:
-			inception_request = ServicePrint(service, dc_data, environment)
-			service_url = inception_request.service_url()
-			with open(spaceFile, 'a+') as contents:
-				contents.write('\n-----------------------SERVICE NAME: '+service+'-----------------------\n')
-				contents.write("\n")
-				for url in service_url:
-					instance_name = url[7:-12]
+		if inception_service:
+			inception_request = Service(datacenter, environment)
+			all_service = inception_request.specific_service()
+			for service in service_data:
+				if service not in all_service:
+					return render_template('output.html', data=f'''Service {service} is not available in environment {environment}. 
+		Use Inception service program to find the list of services\n''')
+					sys.exit()
 
-					contents.write('-------INSTANCE NAME: '+instance_name+'\n')
-					ssh_to = RemoteConnect(instance_name)
-					common_url = url[:-6]
-
-					contents.write('/INFO FOR: '+service+'\n')
-					data = inception_request.endpoint_check(common_url, 'info')
-					if data:
-						try:
-							contents.write('Application Name : '+data['app']['name']+'\n')
-							contents.write('Build Number     : '+data['build']['number'+'\n'])
-							contents.write('Build Time       : '+data['build']['time']+'\n')
-						except KeyError:
-							pass
-
-					contents.write('/CHECK FOR: '+service+'\n')
-					data = inception_request.endpoint_check(common_url, 'check')		
-					if data:
-						try:
-							contents.write('Service Status   : '+data['status']+'\n')	
-						except (KeyError, TypeError):
-							for word in ERROR_WORDS:
-								if word not in str(data):
-									continue
-								else:
-									contents.write('Service Status   : NOT READY'+'\n')
-									return
-							if 'UP' or 'RUNNING' in str(data):
-								contents.write('Service Status   : UP'+'\n')
-							else:
-								contents.write(data+'\n')
-
-
-					contents.write('/HEALTH FOR: '+service+'\n')
-					data = inception_request.endpoint_check(common_url, 'health')
-					if data:
-						try:
-							contents.write('Service Status   : '+data['status']+'\n')
-						except (TypeError, KeyError):
-							for word in ERROR_WORDS:
-								if word not in str(data):
-									continue
-								else:
-									contents.write('Service Status   : NOT READY'+'\n')
-									return
-							if 'UP' or 'RUNNING' in str(data):
-								contents.write('Service Status   : UP'+'\n')
-							else:
-								contents.write(data+'\n')
-
-
-					contents.write('CONTAINER STATUS:'+'\n')
-					container = ssh_to.run_command(DOCKER_COMMAND +'| grep '+service)
-					if not container:
-						contents.write('RunTimeException: Container {} is not running'.format(service))
-					else:
-						contents.write(container.decode('utf8').strip('\n'))
-					contents.write('\n')
+		if not bool(datacenter) ^ bool(inception_service):
+			os.remove(spaceFile)
+			for service in service_data:
+				inception_request = ServicePrint(service, dc_data, environment)
+				service_url = inception_request.service_url()
+				with open(spaceFile, 'a+') as contents:
+					contents.write('\n-----------------------SERVICE NAME: '+service+'-----------------------\n')
 					contents.write("\n")
+					for url in service_url:
+						instance_name = url[7:-12]
+
+						contents.write('-------INSTANCE NAME: '+instance_name+'\n')
+						ssh_to = RemoteConnect(instance_name)
+						common_url = url[:-6]
+
+						contents.write('/INFO FOR: '+service+'\n')
+						data = inception_request.endpoint_check(common_url, 'info')
+						if data:
+							try:
+								contents.write('Application Name : '+data['app']['name']+'\n')
+								contents.write('Build Number     : '+data['build']['number'+'\n'])
+								contents.write('Build Time       : '+data['build']['time']+'\n')
+							except KeyError:
+								pass
+
+						contents.write('/CHECK FOR: '+service+'\n')
+						data = inception_request.endpoint_check(common_url, 'check')		
+						if data:
+							try:
+								contents.write('Service Status   : '+data['status']+'\n')	
+							except (KeyError, TypeError):
+								for word in ERROR_WORDS:
+									if word not in str(data):
+										continue
+									else:
+										contents.write('Service Status   : NOT READY'+'\n')
+										return
+								if 'UP' or 'RUNNING' in str(data):
+									contents.write('Service Status   : UP'+'\n')
+								else:
+									contents.write(data+'\n')
+
+
+						contents.write('/HEALTH FOR: '+service+'\n')
+						data = inception_request.endpoint_check(common_url, 'health')
+						if data:
+							try:
+								contents.write('Service Status   : '+data['status']+'\n')
+							except (TypeError, KeyError):
+								for word in ERROR_WORDS:
+									if word not in str(data):
+										continue
+									else:
+										contents.write('Service Status   : NOT READY'+'\n')
+										return
+								if 'UP' or 'RUNNING' in str(data):
+									contents.write('Service Status   : UP'+'\n')
+								else:
+									contents.write(data+'\n')
+
+
+						contents.write('CONTAINER STATUS:'+'\n')
+						container = ssh_to.run_command(DOCKER_COMMAND +'| grep '+service)
+						if not container:
+							contents.write('RunTimeException: Container {} is not running'.format(service))
+						else:
+							contents.write(container.decode('utf8').strip('\n'))
+						contents.write('\n')
+						contents.write("\n")
 
 		with open(spaceFile, 'r') as contents:
 			output = contents.read()
