@@ -247,3 +247,29 @@ def health_check():
 			output = contents.read()
 			output = output.replace('\n', '<br>')
 			return render_template('output-health.html', data=output)
+
+
+home = str(Path.home())
+today = datetime.date.today()
+
+@app.route('/ci_upload', methods = ['POST','GET'])
+def ci_upload():
+   if request.method == 'POST':
+      f = request.files['file']
+      dataframe = pd.read_excel(f)
+      dataframe = dataframe[['Approval for','Short description']]
+      dataframe = dataframe.drop_duplicates()
+      dataframe["Status"] = pd.Series([])
+      dataframe.to_excel(f'{home}/Downloads/ci-approval{today}.xlsx', index = False)
+
+      return render_template('output.html', data = 'Reports generated. Please check your downloads folder')
+
+
+
+
+
+
+
+
+
+
