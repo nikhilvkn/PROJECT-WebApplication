@@ -265,7 +265,19 @@ def ci_upload():
       return render_template('output.html', data = 'Reports generated. Please check your downloads folder')
 
 
+@app.route('/cr_upload', methods = ['GET', 'POST'])
+def cr_upload():
+   if request.method == 'POST':
+      f = request.files['file']
+      df = pd.read_excel(f)
+      df = df[ df['State'] == 'Ready for Implementation' ]
+      df.sort_values(by=['Scheduled start date'], inplace=True)
+      df = df[['Change request','Subject','Scheduled start date','Scheduled end date']]
+      df = df.drop_duplicates()
+      df["Status"] = pd.Series([])
+      df.to_excel(f'{home}/Downloads/changetask{today}.xlsx', index = False)
 
+      return render_template('output.html', data = 'Reports generated. Please check your downloads folder')
 
 
 
