@@ -179,57 +179,57 @@ def health_check():
 				inception_request = ServicePrint(service, dc_data, environment)
 				service_url = inception_request.service_url()
 				with open(spaceFile, 'a+') as contents:
-					contents.write('\n-----------------------SERVICE NAME: '+service+'-----------------------\n')
+					contents.write('\n-----------------------SERVICE NAME:\t'+service+'-----------------------\n')
 					contents.write("\n")
 					for url in service_url:
 						instance_name = url[7:-12]
 
-						contents.write('-------INSTANCE NAME: '+instance_name+'\n')
+						contents.write('-------INSTANCE NAME:\t'+instance_name+'\n')
 						ssh_to = RemoteConnect(instance_name)
 						common_url = url[:-6]
 
-						contents.write('/INFO FOR: '+service+'\n')
+						contents.write('/INFO FOR:\t'+service+'\n')
 						data = inception_request.endpoint_check(common_url, 'info')
 						if data:
 							try:
-								contents.write('Application Name : '+data['app']['name']+'\n')
-								contents.write('Build Number     : '+data['build']['number'+'\n'])
-								contents.write('Build Time       : '+data['build']['time']+'\n')
+								contents.write('Service Name\t\t:\t'+data['app']['name']+'\n')
+								contents.write('Build Number\t\t:\t'+data['build']['number']+'\n')
+								contents.write('Build Time\t\t\t\t\t:\t'+data['build']['time']+'\n')
 							except KeyError:
 								pass
 
-						contents.write('/CHECK FOR: '+service+'\n')
+						contents.write('/CHECK FOR:\t'+service+'\n')
 						data = inception_request.endpoint_check(common_url, 'check')		
 						if data:
 							try:
-								contents.write('Service Status   : '+data['status']+'\n')	
+								contents.write('Service Status\t\t:\t'+data['status']+'\n')	
 							except (KeyError, TypeError):
 								for word in ERROR_WORDS:
 									if word not in str(data):
 										continue
 									else:
-										contents.write('Service Status   : NOT READY'+'\n')
+										contents.write('Service Status\t\t:\tNOT READY'+'\n')
 										return
 								if 'UP' or 'RUNNING' in str(data):
-									contents.write('Service Status   : UP'+'\n')
+									contents.write('Service Status\t\t:\tUP'+'\n')
 								else:
 									contents.write(data+'\n')
 
 
-						contents.write('/HEALTH FOR: '+service+'\n')
+						contents.write('/HEALTH FOR:\t'+service+'\n')
 						data = inception_request.endpoint_check(common_url, 'health')
 						if data:
 							try:
-								contents.write('Service Status   : '+data['status']+'\n')
+								contents.write('Service Status\t\t:\t'+data['status']+'\n')
 							except (TypeError, KeyError):
 								for word in ERROR_WORDS:
 									if word not in str(data):
 										continue
 									else:
-										contents.write('Service Status   : NOT READY'+'\n')
+										contents.write('Service Status\t\t:\tNOT READY'+'\n')
 										return
 								if 'UP' or 'RUNNING' in str(data):
-									contents.write('Service Status   : UP'+'\n')
+									contents.write('Service Status\t\t:\tUP'+'\n')
 								else:
 									contents.write(data+'\n')
 
@@ -246,6 +246,7 @@ def health_check():
 		with open(spaceFile, 'r') as contents:
 			output = contents.read()
 			output = output.replace('\n', '<br>')
+			output = output.replace('\t', '&ensp;')
 			return render_template('output-health.html', data=output)
 
 
