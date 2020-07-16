@@ -1,4 +1,4 @@
-## Tivo Web Application
+## Web Application
 
 ![](https://img.shields.io/badge/Python-red)
 ![](https://img.shields.io/badge/Flask-green)
