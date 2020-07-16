@@ -85,8 +85,8 @@ DOCKER_COMMAND = 'docker ps -a --format "table {{.Names}}\t{{.Status}}"'
 ERROR_WORDS = ['DOWN','NOT RUNNING','REBALANCING','UNKNOWN']
 homeDir = os.getenv("HOME")
 spaceFile = os.path.join(homeDir, 'health')
-KEY = '/Users/nnarayanan/.ssh/id_rsa'
-USERNAME = 'core'
+KEY = 'xxxx'
+USERNAME = 'xxxx'
 
 
 class RemoteConnect:
